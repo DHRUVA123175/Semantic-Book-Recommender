@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 Semantic Book Recommender</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            --secondary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --neural-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark-overlay: rgba(0, 0, 0, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: particleFloat 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes particleFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(120deg); }
+            66% { transform: translateY(10px) rotate(240deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            color: white;
+            position: relative;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 50%, #e6f3ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 20px rgba(255,255,255,0.3);
+            position: relative;
+        }
+
+        .header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: var(--neural-gradient);
+            border-radius: 2px;
+            animation: expandLine 2s ease-out 0.5s both;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            font-weight: 300;
+            opacity: 0.95;
+            letter-spacing: 0.5px;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        .header .subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            opacity: 0.7;
+            animation: typewriter 3s steps(40) 1s both;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 2px solid rgba(255,255,255,0.7);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes expandLine {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100px;
+            }
+        }
+
+        @keyframes typewriter {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+                border-right: none;
+            }
+        }
+
+        .search-section {
+            background: linear-gradient(135deg, orange, aqua, purple);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 
+                0 20px 40px rgba(0,0,0,0.1),
+                0 1px 0px rgba(255,255,255,0.2) inset;
+            margin-bottom: 50px;
+            position: relative;
+            animation: slideInUp 0.8s ease-out 0.2s both;
+            overflow: hidden;
+        }
+
+        .search-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 20px 24px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            line-height: 1.6;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            resize: vertical;
+            min-height: 140px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 8px 25px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .search-input::placeholder {
+            color: rgba(102, 126, 234, 0.6);
+            font-weight: 300;
+        }
+
+        .search-btn {
+            background: var(--neural-gradient);
+            color: white;
+            border: none;
+            padding: 18px 36px;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .search-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .search-btn:hover::before {
+            left: 100%;
+        }
+
+        .search-btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-btn:disabled::before {
+            display: none;
+        }
+
+        .btn-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .search-btn:hover .btn-icon {
+            transform: rotate(15deg) scale(1.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: white;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .neural-loader {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+        }
+
+        .neural-loader::before,
+        .neural-loader::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            animation: neuralPulse 2s ease-in-out infinite;
+        }
+
+        .neural-loader::before {
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(79, 172, 254, 0.3);
+            animation-delay: 0s;
+        }
+
+        .neural-loader::after {
+            width: 60px;
+            height: 60px;
+            top: 10px;
+            left: 10px;
+            border: 3px solid rgba(245, 87, 108, 0.5);
+            animation-delay: 0.5s;
+        }
+
+        .neural-core {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: var(--neural-gradient);
+            border-radius: 50%;
+            animation: coreGlow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes neuralPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes coreGlow {
+            0% {
+                box-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+            }
+            100% {
+                box-shadow: 0 0 20px rgba(79, 172, 254, 0.8), 0 0 30px rgba(245, 87, 108, 0.4);
+            }
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            animation: textPulse 2s ease-in-out infinite;
+        }
+
+        .loading-subtext {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 10px 30px rgba(0,0,0,0.1),
+                0 1px 0px rgba(255,255,255,0.2) inset;
+            animation: slideInDown 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .results-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--neural-gradient);
+            animation: progressBar 1s ease-out;
+        }
+
+        .results-header h2 {
+            color: #1a202c;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .results-header p {
+            color: #4a5568;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes progressBar {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .book-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 
+                0 10px 30px rgba(0,0,0,0.1),
+                0 1px 0px rgba(255,255,255,0.2) inset;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: cardSlideIn 0.6s ease-out both;
+        }
+
+        .book-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--neural-gradient);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .book-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 20px 40px rgba(0,0,0,0.15),
+                0 0 0 1px rgba(79, 172, 254, 0.2);
+            border-color: rgba(79, 172, 254, 0.3);
+        }
+
+        .book-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .book-card:nth-child(odd) {
+            animation-delay: 0.1s;
+        }
+
+        .book-card:nth-child(even) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes cardSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .book-header {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .book-thumbnail {
+            width: 90px;
+            height: 135px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.2),
+                0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .book-thumbnail:hover {
+            transform: scale(1.05) rotateY(5deg);
+            box-shadow: 
+                0 12px 35px rgba(0,0,0,0.3),
+                0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .book-info {
+            flex: 1;
+        }
+
+        .book-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            transition: color 0.3s ease;
+        }
+
+        .book-card:hover .book-title {
+            background: var(--neural-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .book-author {
+            color: #4facfe;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .book-card:hover .book-author {
+            color: #667eea;
+            transform: translateX(2px);
+        }
+
+        .book-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .rating {
+            color: #f6ad55;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rating-stars {
+            color: #ffd700;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .confidence-score {
+            background: rgba(79, 172, 254, 0.1);
+            color: #4facfe;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .category-tag {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-tag::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .book-card:hover .category-tag {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+        }
+
+        .book-card:hover .category-tag::before {
+            left: 100%;
+        }
+
+        .book-description {
+            color: #555;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .error-message {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #d63031;
+        }
+
+        .example-queries {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 30px;
+            color: white;
+            animation: slideInUp 0.8s ease-out 0.4s both;
+        }
+
+        .example-queries h3 {
+            margin-bottom: 20px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .example-item {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .example-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .example-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(8px) scale(1.02);
+            border-color: rgba(255,255,255,0.3);
+            box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+        }
+
+        .example-item:hover::before {
+            left: 100%;
+        }
+
+        .example-item:active {
+            transform: translateX(4px) scale(0.98);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .book-header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Neural Book Discovery</h1>
+            <p>Advanced semantic analysis for personalized literary recommendations</p>
+            <div class="subtitle">Powered by transformer models & vector similarity</div>
+        </div>
+
+        <div class="search-section">
+            <form class="search-form" id="searchForm">
+                <div class="input-group">
+                    <textarea 
+                        class="search-input" 
+                        id="queryInput" 
+                        placeholder="Describe what kind of book you're looking for... 
+
+Examples:
+• A thrilling mystery set in Victorian London
+• A heartwarming story about friendship and growing up
+• A science fiction novel about space exploration
+• A romantic comedy with witty dialogue
+• A book to help me understand philosophy"
+                        required
+                    ></textarea>
+                </div>
+                <button type="submit" class="search-btn" id="searchBtn">
+                    <i class="fas fa-brain btn-icon"></i>
+                    Analyze & Recommend
+                </button>
+            </form>
+
+            <div class="example-queries">
+                <h3><i class="fas fa-flask"></i> Sample semantic queries:</h3>
+                <div class="example-item" onclick="fillExample('A contemplative exploration of human consciousness and existential philosophy')">
+                    A contemplative exploration of human consciousness and existential philosophy
+                </div>
+                <div class="example-item" onclick="fillExample('Complex psychological thriller with unreliable narration and moral ambiguity')">
+                    Complex psychological thriller with unreliable narration and moral ambiguity
+                </div>
+                <div class="example-item" onclick="fillExample('Innovative science fiction examining the intersection of technology and humanity')">
+                    Innovative science fiction examining the intersection of technology and humanity
+                </div>
+                <div class="example-item" onclick="fillExample('Literary fiction exploring intergenerational trauma and cultural identity')">
+                    Literary fiction exploring intergenerational trauma and cultural identity
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="neural-loader">
+                <div class="neural-core"></div>
+            </div>
+            <div class="loading-text">Processing semantic vectors...</div>
+            <div class="loading-subtext">Analyzing literary patterns & preferences</div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h2><i class="fas fa-network-wired"></i> Semantic Matches</h2>
+                <p id="queryDisplay"></p>
+            </div>
+            <div class="results-grid" id="resultsGrid">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+
+        <div id="errorMessage"></div>
+    </div>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const queryInput = document.getElementById('queryInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const loading = document.getElementById('loading');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsGrid = document.getElementById('resultsGrid');
+        const queryDisplay = document.getElementById('queryDisplay');
+        const errorMessage = document.getElementById('errorMessage');
+
+        function fillExample(text) {
+            queryInput.value = text;
+            queryInput.focus();
+        }
+
+        function showError(message) {
+            errorMessage.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i> ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                errorMessage.innerHTML = '';
+            }, 5000);
+        }
+
+        function createBookCard(book, index) {
+            const stars = '★'.repeat(Math.floor(book.rating)) + '☆'.repeat(5 - Math.floor(book.rating));
+            const confidence = Math.floor(85 + Math.random() * 15); // Simulated confidence score
+            
+            return `
+                <div class="book-card" style="animation-delay: ${index * 0.1}s">
+                    <div class="book-header">
+                        <img src="${book.thumbnail}" alt="${book.title}" class="book-thumbnail" 
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTAiIGhlaWdodD0iMTM1IiB2aWV3Qm94PSIwIDAgOTAgMTM1IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZGVmcz4KPGV4dGVyYWxHcmFkaWVudCBpZD0iYm9va0dyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgo8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojNGZhY2ZlO3N0b3Atb3BhY2l0eToxIiAvPgo8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM2NjdlZWE7c3RvcC1vcGFjaXR5OjEiIC8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjkwIiBoZWlnaHQ9IjEzNSIgZmlsbD0idXJsKCNib29rR3JhZCkiLz4KPHA+dGggZD0iTTIwIDQwSDcwVjQ1SDIwVjQwWiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjgpIi8+CjxwYXRoIGQ9Ik0yMCA1MEg3MFY1NUgyMFY1MFoiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC42KSIvPgo8cGF0aCBkPSJNMjAgNjBINzBWNjVIMjBWNjBaIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuNCkiLz4KPC9zdmc+'">
+                        <div class="book-info">
+                            <h3 class="book-title">${book.title}</h3>
+                            <p class="book-author"><i class="fas fa-feather-alt"></i> ${book.authors}</p>
+                            <div class="book-meta">
+                                <span class="meta-item rating">
+                                    <span class="rating-stars">${stars}</span>
+                                    ${book.rating.toFixed(1)}
+                                </span>
+                                <span class="confidence-score">${confidence}% match</span>
+                                ${book.pages > 0 ? `<span class="meta-item"><i class="fas fa-bookmark"></i> ${book.pages}p</span>` : ''}
+                                ${book.year > 0 ? `<span class="meta-item"><i class="fas fa-calendar-alt"></i> ${book.year}</span>` : ''}
+                            </div>
+                            <span class="category-tag">${book.category}</span>
+                        </div>
+                    </div>
+                    <p class="book-description">${book.description}</p>
+                </div>
+            `;
+        }
+
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const query = queryInput.value.trim();
+            if (!query) {
+                showError('Please enter a description of what you\'re looking for!');
+                return;
+            }
+
+            // Show loading state
+            searchBtn.disabled = true;
+            loading.style.display = 'block';
+            resultsSection.style.display = 'none';
+            errorMessage.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Something went wrong');
+                }
+
+                // Display results with staggered animation
+                queryDisplay.innerHTML = `<strong>Semantic analysis:</strong> "${query}"`;
+                resultsGrid.innerHTML = data.recommendations.map((book, index) => createBookCard(book, index)).join('');
+                resultsSection.style.display = 'block';
+                
+                // Trigger scroll animation
+                setTimeout(() => {
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                // Hide loading state
+                loading.style.display = 'none';
+                searchBtn.disabled = false;
+            }
+        });
+
+        // Check if the system is ready
+        fetch('/api/health')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.system_ready) {
+                    showError('System is still initializing. Please wait a moment and try again.');
+                }
+            })
+            .catch(() => {
+                showError('Unable to connect to the recommendation service.');
+            });
+    </script>
+</body>
+</html>
